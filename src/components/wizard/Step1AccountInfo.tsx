@@ -5,8 +5,9 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Checkbox } from "@/components/ui/checkbox"
+import { Alert, AlertDescription } from "@/components/ui/alert"
 import { useState } from "react"
-import { Loader2 } from "lucide-react"
+import { Loader2, AlertTriangle } from "lucide-react"
 
 interface Step1Props {
     onNext: () => void
@@ -15,6 +16,7 @@ interface Step1Props {
 export function Step1AccountInfo({ onNext }: Step1Props) {
     const { register, formState: { errors }, trigger, watch, setValue } = useFormContext()
     const [isSimulating, setIsSimulating] = useState(false)
+    const [duplicateEmailError, setDuplicateEmailError] = useState<string | null>(null)
 
     const handleNext = async () => {
         const isValid = await trigger(["firstName", "lastName", "workEmail", "acceptTerms"])
@@ -23,6 +25,30 @@ export function Step1AccountInfo({ onNext }: Step1Props) {
             const email = watch("workEmail")
 
             try {
+                // First, check if email already exists
+                const checkResponse = await fetch("/api/check-email", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ email }),
+                })
+
+                if (!checkResponse.ok) {
+                    throw new Error("Failed to verify email")
+                }
+
+                const checkData = await checkResponse.json()
+
+                if (checkData.exists) {
+                    // Email already exists - show alert below email field
+                    setDuplicateEmailError(checkData.message)
+                    setIsSimulating(false)
+                    return
+                }
+
+                // Clear any previous duplicate email error
+                setDuplicateEmailError(null)
+
+                // Email is available, proceed to send OTP
                 const response = await fetch("/api/otp/send", {
                     method: "POST",
                     headers: { "Content-Type": "application/json" },
@@ -36,8 +62,8 @@ export function Step1AccountInfo({ onNext }: Step1Props) {
 
                 onNext()
             } catch (error) {
-                console.error("Send OTP Error:", error)
-                alert("Failed to send verification code. Please try again.")
+                console.error("Error:", error)
+                alert("An error occurred. Please try again.")
             } finally {
                 setIsSimulating(false)
             }
@@ -86,9 +112,24 @@ export function Step1AccountInfo({ onNext }: Step1Props) {
                     placeholder="john@company.com"
                     {...register("workEmail")}
                     className={errors.workEmail ? "border-red-500" : ""}
+                    onChange={() => setDuplicateEmailError(null)}
                 />
                 {errors.workEmail && (
                     <p className="text-xs text-red-500">{errors.workEmail.message as string}</p>
+                )}
+                {duplicateEmailError && (
+                    <Alert variant="destructive" className="mt-2">
+                        <AlertTriangle className="h-4 w-4" />
+                        <AlertDescription>
+                            {duplicateEmailError}{" "}
+                            <a
+                                href="https://dashboard.cloud4wi.com"
+                                className="font-medium underline underline-offset-4 hover:text-destructive-foreground/80"
+                            >
+                                Log in here
+                            </a>
+                        </AlertDescription>
+                    </Alert>
                 )}
             </div>
 
@@ -123,7 +164,7 @@ export function Step1AccountInfo({ onNext }: Step1Props) {
             </Button>
 
             <p className="text-xs text-center text-muted-foreground">
-                Already have an account? <a href="#" className="text-primary hover:underline">Log in</a>
+                Already have an account? <a href="https://dashboard.cloud4wi.com" className="text-primary hover:underline">Log in</a>
             </p>
         </div>
     )
