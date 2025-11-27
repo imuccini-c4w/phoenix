@@ -17,12 +17,18 @@ export async function GET(request: Request) {
 
     try {
         const response = await fetch(
-            `https://www.thecompaniesapi.com/api/enrich-company-from-email?email=${encodeURIComponent(email)}&token=${token}`
+            `https://api.thecompaniesapi.com/v2/companies/by-email?email=${encodeURIComponent(email)}`,
+            {
+                headers: {
+                    "Authorization": `Basic ${token}`
+                }
+            }
         )
 
         if (!response.ok) {
-            console.error("Upstream API error:", response.status, response.statusText)
-            return NextResponse.json({ error: "Failed to fetch company data" }, { status: response.status })
+            const errorText = await response.text()
+            console.error("Upstream API error:", response.status, response.statusText, errorText)
+            return NextResponse.json({ error: "Failed to fetch company data", details: errorText }, { status: response.status })
         }
 
         const data = await response.json()
