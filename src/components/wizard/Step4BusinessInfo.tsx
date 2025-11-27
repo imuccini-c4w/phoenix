@@ -31,11 +31,15 @@ export function Step4BusinessInfo({ onBack }: Step4Props) {
 
                     // Map API response to form fields
                     // Note: Adjust these mappings based on the actual API response structure
-                    if (data && data.name) {
-                        setValue("companyName", data.name)
-                        setValue("website", data.website || data.domain || "")
-                        setValue("industry", data.industry || "")
-                        setValue("country", data.country || data.location || "")
+                    if (data && data.company) {
+                        const company = data.company
+                        setValue("companyName", company.about?.name || "")
+                        setValue("website", company.domain?.domain ? `https://${company.domain.domain}` : "")
+                        setValue("industry", company.about?.industry || "")
+
+                        // Try to find country from headquarters
+                        const country = company.locations?.headquarters?.country?.name || ""
+                        setValue("country", country)
                     }
                 } else {
                     // Fallback if API fails (e.g. not found)

@@ -48,6 +48,7 @@ export type WizardFormData = z.infer<typeof wizardSchema>
 export function Wizard() {
     const [step, setStep] = useState(1)
     const [isLoading, setIsLoading] = useState(false)
+    const [successData, setSuccessData] = useState<any>(null)
 
     const methods = useForm<WizardFormData>({
         resolver: zodResolver(wizardSchema),
@@ -70,7 +71,9 @@ export function Wizard() {
     const nextStep = () => setStep((s) => Math.min(s + 1, 4))
     const prevStep = () => setStep((s) => Math.max(s - 1, 1))
 
-    const onSubmit = (data: WizardFormData) => {
+    const onSubmit = async (data: WizardFormData) => {
+        setIsLoading(true)
+
         // Format the final output
         const finalOutput = {
             firstName: data.firstName,
@@ -86,15 +89,58 @@ export function Wizard() {
             }
         }
 
-        console.log("Final JSON Output:", JSON.stringify(finalOutput, null, 2))
-        alert("Account creation successful! Check console for JSON output.")
+        // Simulate API delay
+        await new Promise(resolve => setTimeout(resolve, 2000))
+
+        setIsLoading(false)
+        setSuccessData(finalOutput)
+    }
+
+    if (successData) {
+        return (
+            <div className="min-h-screen flex items-center justify-center bg-gray-50/50 p-4">
+                <div className="w-full max-w-2xl bg-white rounded-2xl shadow-xl overflow-hidden p-8 animate-in fade-in zoom-in-95 duration-500">
+                    <div className="text-center space-y-4 mb-8">
+                        <div className="h-16 w-16 bg-green-100 text-green-600 rounded-full flex items-center justify-center mx-auto">
+                            <svg className="w-8 h-8" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                            </svg>
+                        </div>
+                        <h2 className="text-3xl font-bold text-gray-900">Account Created!</h2>
+                        <p className="text-gray-500">Here is the payload that would be sent to the server:</p>
+                    </div>
+
+                    <div className="bg-slate-950 rounded-lg p-6 overflow-auto max-h-[500px] border border-slate-800">
+                        <pre className="text-sm font-mono text-blue-400">
+                            {JSON.stringify(successData, null, 2)}
+                        </pre>
+                    </div>
+
+                    <div className="mt-8 text-center">
+                        <button
+                            onClick={() => window.location.reload()}
+                            className="text-sm text-gray-500 hover:text-gray-900 underline"
+                        >
+                            Start Over
+                        </button>
+                    </div>
+                </div>
+            </div>
+        )
     }
 
     return (
         <div className="min-h-screen flex items-center justify-center bg-gray-50/50 p-4">
             <div className="w-full max-w-4xl grid grid-cols-1 md:grid-cols-2 gap-0 bg-white rounded-2xl shadow-xl overflow-hidden min-h-[600px]">
                 {/* Left Side - Form */}
-                <div className="p-8 flex flex-col justify-between">
+                <div className="p-8 flex flex-col justify-between relative">
+                    {isLoading && (
+                        <div className="absolute inset-0 bg-white/80 backdrop-blur-sm z-50 flex flex-col items-center justify-center space-y-4 animate-in fade-in duration-300">
+                            <div className="h-12 w-12 border-4 border-primary border-t-transparent rounded-full animate-spin" />
+                            <p className="text-lg font-medium text-gray-600">Finalizing your account...</p>
+                        </div>
+                    )}
+
                     <div className="space-y-6">
                         <div className="space-y-2">
                             <div className="flex items-center justify-between text-sm text-muted-foreground mb-2">

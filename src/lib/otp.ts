@@ -21,9 +21,9 @@ export class TwilioOTPProvider implements OTPProvider {
             await this.client.verify.v2.services(this.serviceSid)
                 .verifications
                 .create({ to: email, channel: "email" })
-        } catch (error) {
+        } catch (error: any) {
             console.error("Twilio Send OTP Error:", error)
-            throw new Error("Failed to send OTP")
+            throw new Error(error.message || "Failed to send OTP")
         }
     }
 
