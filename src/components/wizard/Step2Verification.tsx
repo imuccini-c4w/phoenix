@@ -8,8 +8,9 @@ import {
     InputOTPGroup,
     InputOTPSlot,
 } from "@/components/ui/input-otp"
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { Loader2, ArrowLeft } from "lucide-react"
+import { toast } from "sonner"
 
 interface Step2Props {
     onNext: () => void
@@ -20,6 +21,43 @@ export function Step2Verification({ onNext, onBack }: Step2Props) {
     const { setValue, trigger, watch, formState: { errors } } = useFormContext()
     const [isVerifying, setIsVerifying] = useState(false)
     const [error, setError] = useState("")
+    const [cooldown, setCooldown] = useState(0)
+
+    useEffect(() => {
+        let timer: NodeJS.Timeout
+        if (cooldown > 0) {
+            timer = setInterval(() => {
+                setCooldown((prev) => prev - 1)
+            }, 1000)
+        }
+        return () => {
+            if (timer) clearInterval(timer)
+        }
+    }, [cooldown])
+
+    const handleResend = async () => {
+        try {
+            const email = watch("workEmail")
+            const response = await fetch("/api/otp/send", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ email }),
+            })
+
+            if (!response.ok) {
+                throw new Error("Failed to resend code")
+            }
+
+            toast.success("Code sent", {
+                description: "A new verification code has been sent to your email.",
+            })
+            setCooldown(45)
+        } catch (error) {
+            toast.error("Error", {
+                description: "Failed to resend code. Please try again.",
+            })
+        }
+    }
 
     const handleVerify = async () => {
         const code = watch("verificationCode")
@@ -89,7 +127,15 @@ export function Step2Verification({ onNext, onBack }: Step2Props) {
                 )}
 
                 <div className="text-center text-sm text-muted-foreground">
-                    Didn't receive the code? <button type="button" className="text-primary hover:underline">Resend</button>
+                    Didn't receive the code?{" "}
+                    <button
+                        type="button"
+                        className="text-primary hover:underline"
+                        onClick={handleResend}
+                        disabled={cooldown > 0} // Disable button during cooldown
+                    >
+                        {cooldown > 0 ? `Resend (${cooldown}s)` : "Resend"}
+                    </button>
                 </div>
             </div>
 

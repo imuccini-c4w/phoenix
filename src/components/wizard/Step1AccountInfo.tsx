@@ -98,8 +98,8 @@ export function Step1AccountInfo({ onNext }: Step1Props) {
                     onCheckedChange={(checked) => setValue("acceptTerms", checked)}
                     {...register("acceptTerms")}
                 />
-                <Label htmlFor="terms" className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
-                    I accept the domain conditions
+                <Label htmlFor="terms" className="text-sm font-normal leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
+                    I accept Cloud4Wi&apos;s <a href="https://cloud4wi.ai/cloud4wi-privacy-policy/" target="_blank" rel="noopener noreferrer" className="underline hover:text-primary">Terms & Conditions</a>
                 </Label>
             </div>
             {errors.acceptTerms && (
