@@ -20,11 +20,27 @@ export function Step1AccountInfo({ onNext }: Step1Props) {
         const isValid = await trigger(["firstName", "lastName", "workEmail", "acceptTerms"])
         if (isValid) {
             setIsSimulating(true)
-            // Simulate "sending code"
-            setTimeout(() => {
-                setIsSimulating(false)
+            const email = watch("workEmail")
+
+            try {
+                const response = await fetch("/api/otp/send", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ email }),
+                })
+
+                if (!response.ok) {
+                    const data = await response.json()
+                    throw new Error(data.error || "Failed to send code")
+                }
+
                 onNext()
-            }, 1500)
+            } catch (error) {
+                console.error("Send OTP Error:", error)
+                alert("Failed to send verification code. Please try again.")
+            } finally {
+                setIsSimulating(false)
+            }
         }
     }
 

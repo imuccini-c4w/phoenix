@@ -31,15 +31,26 @@ export function Step2Verification({ onNext, onBack }: Step2Props) {
         setIsVerifying(true)
         setError("")
 
-        // Simulate verification delay
-        setTimeout(() => {
-            if (code === "123456") {
+        try {
+            const email = watch("workEmail")
+            const response = await fetch("/api/otp/verify", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ email, code }),
+            })
+
+            if (response.ok) {
                 onNext()
             } else {
-                setError("Invalid code. Please try again (Hint: 123456)")
-                setIsVerifying(false)
+                const data = await response.json()
+                setError(data.error || "Invalid code. Please try again.")
             }
-        }, 1000)
+        } catch (error) {
+            console.error("Verify OTP Error:", error)
+            setError("An error occurred. Please try again.")
+        } finally {
+            setIsVerifying(false)
+        }
     }
 
     return (
