@@ -139,9 +139,9 @@ export function Step1AccountInfo({ onNext }: Step1Props) {
                     onCheckedChange={(checked) => setValue("acceptTerms", checked)}
                     {...register("acceptTerms")}
                 />
-                <Label htmlFor="terms" className="text-sm font-normal leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
-                    I accept Cloud4Wi&apos;s <a href="https://cloud4wi.ai/cloud4wi-privacy-policy/" target="_blank" rel="noopener noreferrer" className="underline hover:text-primary">Terms & Conditions</a>
-                </Label>
+                <label htmlFor="terms" className="text-sm font-normal cursor-pointer peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
+                    I agree to Cloud4Wi's <a href="https://cloud4wi.ai/cloud4wi-privacy-policy/" target="_blank" rel="noopener noreferrer" className="underline hover:text-primary">Privacy Policy</a> and <a href="https://support.cloud4wi.ai/hc/en-us/articles/205422285-Master-Subscription-Agreement" target="_blank" rel="noopener noreferrer" className="underline hover:text-primary">Terms of Service</a>
+                </label>
             </div>
             {errors.acceptTerms && (
                 <p className="text-xs text-red-500">{errors.acceptTerms.message as string}</p>

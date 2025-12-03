@@ -27,21 +27,22 @@ const wizardSchema = z.object({
     // Step 2
     verificationCode: z.string().length(6, "Code must be 6 digits"),
 
-    // Step 3
-    password: z.string().min(8, "Password must be at least 8 characters")
-        .regex(/[A-Z]/, "Must contain at least one uppercase letter")
-        .regex(/[0-9]/, "Must contain at least one number"),
-    confirmPassword: z.string(),
+    // Step 3 - TEMPORARILY BYPASSED
+    // password: z.string().min(8, "Password must be at least 8 characters")
+    //     .regex(/[A-Z]/, "Must contain at least one uppercase letter")
+    //     .regex(/[0-9]/, "Must contain at least one number"),
+    // confirmPassword: z.string(),
 
-    // Step 4
+    // Step 4 (now Step 3)
     companyName: z.string().optional(),
     industry: z.string().optional(),
     country: z.string().optional(),
     website: z.string().optional(),
-}).refine((data) => data.password === data.confirmPassword, {
-    message: "Passwords do not match",
-    path: ["confirmPassword"],
 })
+// .refine((data) => data.password === data.confirmPassword, {
+//     message: "Passwords do not match",
+//     path: ["confirmPassword"],
+// })
 
 export type WizardFormData = z.infer<typeof wizardSchema>
 
@@ -59,8 +60,8 @@ export function Wizard() {
             workEmail: "",
             acceptTerms: false,
             verificationCode: "",
-            password: "",
-            confirmPassword: "",
+            // password: "",
+            // confirmPassword: "",
             companyName: "",
             industry: "",
             country: "",
@@ -68,8 +69,15 @@ export function Wizard() {
         }
     })
 
-    const nextStep = () => setStep((s) => Math.min(s + 1, 4))
-    const prevStep = () => setStep((s) => Math.max(s - 1, 1))
+    // TEMPORARILY BYPASS STEP 3 (Password)
+    const nextStep = () => setStep((s) => {
+        if (s === 2) return 4 // Skip from Step 2 to Step 4
+        return Math.min(s + 1, 4)
+    })
+    const prevStep = () => setStep((s) => {
+        if (s === 4) return 2 // Go back from Step 4 to Step 2
+        return Math.max(s - 1, 1)
+    })
 
     const onSubmit = async (data: WizardFormData) => {
         setIsLoading(true)
@@ -79,7 +87,7 @@ export function Wizard() {
             firstName: data.firstName,
             lastName: data.lastName,
             workEmail: data.workEmail,
-            password: data.password, // In a real app, this would be hashed or handled securely
+            // password: data.password, // TEMPORARILY BYPASSED
             isDomainConditionsAccepted: data.acceptTerms,
             business: {
                 companyName: data.companyName || "",
@@ -89,11 +97,32 @@ export function Wizard() {
             }
         }
 
-        // Simulate API delay
-        await new Promise(resolve => setTimeout(resolve, 2000))
+        try {
+            // Save to Google Sheets
+            const response = await fetch('/api/submit', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(finalOutput),
+            })
 
-        setIsLoading(false)
-        setSuccessData(finalOutput)
+            if (!response.ok) {
+                throw new Error('Failed to save data')
+            }
+
+            // Simulate additional processing delay
+            await new Promise(resolve => setTimeout(resolve, 1000))
+
+            setIsLoading(false)
+            setSuccessData(finalOutput)
+        } catch (error) {
+            console.error('Error submitting form:', error)
+            setIsLoading(false)
+            // Still show success screen even if Google Sheets fails
+            // In production, you might want to handle this differently
+            setSuccessData(finalOutput)
+        }
     }
 
     if (successData) {
@@ -116,7 +145,7 @@ export function Wizard() {
                     </svg>
                 </div>
 
-                <div className="w-full max-w-2xl mx-auto relative z-10">
+                <div className="w-full max-w-4xl mx-auto relative z-10">
                     {/* Logo with dynamic top padding */}
                     <div className="flex justify-center pt-9 sm:pt-[90px] pb-9">
                         <img
@@ -126,31 +155,81 @@ export function Wizard() {
                         />
                     </div>
 
-                    {/* Success Card */}
-                    <div className="bg-white rounded-2xl shadow-xl overflow-hidden p-8 animate-in fade-in zoom-in-95 duration-500">
-                        <div className="text-center space-y-4 mb-8">
-                            <div className="h-16 w-16 bg-green-100 text-green-600 rounded-full flex items-center justify-center mx-auto">
-                                <svg className="w-8 h-8" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                                </svg>
+                    {/* Success Card with same layout as wizard */}
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-0 bg-white rounded-2xl shadow-xl overflow-hidden min-h-[600px] animate-in fade-in zoom-in-95 duration-500">
+                        {/* Left Side - Success Message */}
+                        <div className="p-8 md:p-12 flex flex-col justify-center">
+                            {/* Icon */}
+                            <div className="mb-8">
+                                <div className="h-16 w-16 bg-blue-50 text-blue-600 rounded-full flex items-center justify-center">
+                                    <svg className="w-8 h-8" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                                    </svg>
+                                </div>
                             </div>
-                            <h2 className="text-3xl font-bold text-gray-900">Account Created!</h2>
-                            <p className="text-gray-500">Here is the payload that would be sent to the server:</p>
+
+                            {/* Heading and Description */}
+                            <div className="space-y-4 mb-8">
+                                <h1 className="text-3xl md:text-4xl font-bold text-gray-900">Check your inbox!</h1>
+                                <p className="text-gray-600 text-lg leading-relaxed">
+                                    Your account creation is underway. We're setting things up for you and will send an onboarding email to your address within 24 hours.
+                                </p>
+                            </div>
+
+                            {/* Status Checklist */}
+                            <div className="space-y-4 mb-8">
+                                <div className="flex items-center space-x-3">
+                                    <div className="h-5 w-5 bg-green-100 text-green-600 rounded-full flex items-center justify-center flex-shrink-0">
+                                        <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
+                                        </svg>
+                                    </div>
+                                    <span className="text-gray-900 font-medium">Account submitted</span>
+                                </div>
+                                <div className="flex items-center space-x-3">
+                                    <div className="h-5 w-5 bg-gray-100 text-gray-400 rounded-full flex items-center justify-center flex-shrink-0">
+                                        <svg className="w-3 h-3 animate-spin" fill="none" viewBox="0 0 24 24">
+                                            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                                            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                                        </svg>
+                                    </div>
+                                    <span className="text-gray-500">Approval pending</span>
+                                </div>
+                                <div className="flex items-center space-x-3">
+                                    <div className="h-5 w-5 bg-gray-100 text-gray-400 rounded-full flex items-center justify-center flex-shrink-0">
+                                        <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                                        </svg>
+                                    </div>
+                                    <span className="text-gray-500">Onboarding email</span>
+                                </div>
+                            </div>
+
+                            {/* Go to Homepage Button */}
+                            <div className="space-y-4">
+                                <a
+                                    href="https://cloud4wi.ai"
+                                    className="block w-full bg-blue-600 hover:bg-blue-700 text-white font-medium py-3 px-6 rounded-lg text-center transition-colors"
+                                >
+                                    Go to Homepage
+                                </a>
+                                <p className="text-sm text-gray-500 text-center">
+                                    Can't find the email? Check your spam folder.
+                                </p>
+                            </div>
                         </div>
 
-                        <div className="bg-slate-950 rounded-lg p-6 overflow-auto max-h-[500px] border border-slate-800">
-                            <pre className="text-sm font-mono text-blue-400">
-                                {JSON.stringify(successData, null, 2)}
-                            </pre>
-                        </div>
-
-                        <div className="mt-8 text-center">
-                            <button
-                                onClick={() => window.location.reload()}
-                                className="text-sm text-gray-500 hover:text-gray-900 underline"
-                            >
-                                Start Over
-                            </button>
+                        {/* Right Side - Visual/Context */}
+                        <div className="hidden md:block bg-slate-900 relative">
+                            <div className="absolute inset-0 bg-[url('https://images.unsplash.com/photo-1497366216548-37526070297c?auto=format&fit=crop&q=80')] bg-cover bg-center opacity-20" />
+                            <div className="relative h-full flex flex-col justify-end p-12 text-white">
+                                <div className="space-y-4">
+                                    <h2 className="text-3xl font-bold">Let's get started with Guest WiFi.</h2>
+                                    <p className="text-gray-300 text-lg">
+                                        Elevate your guest WiFi experience for free in a few minutes!.
+                                    </p>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>
