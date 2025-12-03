@@ -1,16 +1,19 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { google } from 'googleapis'
-import path from 'path'
 
 export async function POST(request: NextRequest) {
     try {
         const data = await request.json()
 
-        // Load the service account credentials
-        const keyFilePath = path.join(process.cwd(), 'iam.json')
+        // Load the service account credentials from environment variable
+        if (!process.env.GOOGLE_SERVICE_ACCOUNT_KEY) {
+            throw new Error('GOOGLE_SERVICE_ACCOUNT_KEY environment variable is not set')
+        }
+
+        const credentials = JSON.parse(process.env.GOOGLE_SERVICE_ACCOUNT_KEY)
 
         const auth = new google.auth.GoogleAuth({
-            keyFile: keyFilePath,
+            credentials,
             scopes: ['https://www.googleapis.com/auth/spreadsheets'],
         })
 

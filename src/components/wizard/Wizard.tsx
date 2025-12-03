@@ -6,10 +6,11 @@ import { zodResolver } from "@hookform/resolvers/zod"
 import { z } from "zod"
 import { Step1AccountInfo } from "./Step1AccountInfo"
 import { Step2Verification } from "./Step2Verification"
-import { Step3Password } from "./Step3Password"
+
 import { Step4BusinessInfo } from "./Step4BusinessInfo"
 import { Progress } from "@/components/ui/progress"
 import { Card, CardContent } from "@/components/ui/card"
+import { Button } from "@/components/ui/button"
 import { cn } from "@/lib/utils"
 
 // Define the schema for the entire form
@@ -69,15 +70,9 @@ export function Wizard() {
         }
     })
 
-    // TEMPORARILY BYPASS STEP 3 (Password)
-    const nextStep = () => setStep((s) => {
-        if (s === 2) return 4 // Skip from Step 2 to Step 4
-        return Math.min(s + 1, 4)
-    })
-    const prevStep = () => setStep((s) => {
-        if (s === 4) return 2 // Go back from Step 4 to Step 2
-        return Math.max(s - 1, 1)
-    })
+    // TEMPORARILY BYPASS STEP 3 (Password) - Now permanently removed from flow
+    const nextStep = () => setStep((s) => Math.min(s + 1, 3))
+    const prevStep = () => setStep((s) => Math.max(s - 1, 1))
 
     const onSubmit = async (data: WizardFormData) => {
         setIsLoading(true)
@@ -169,9 +164,9 @@ export function Wizard() {
                             </div>
 
                             {/* Heading and Description */}
-                            <div className="space-y-4 mb-8">
-                                <h1 className="text-3xl md:text-4xl font-bold text-gray-900">Check your inbox!</h1>
-                                <p className="text-gray-600 text-lg leading-relaxed">
+                            <div className="space-y-2 mb-8">
+                                <h1 className="text-2xl font-bold tracking-tight">Check your inbox!</h1>
+                                <p className="text-muted-foreground">
                                     Your account creation is underway. We're setting things up for you and will send an onboarding email to your address within 24 hours.
                                 </p>
                             </div>
@@ -207,13 +202,15 @@ export function Wizard() {
 
                             {/* Go to Homepage Button */}
                             <div className="space-y-4">
-                                <a
-                                    href="https://cloud4wi.ai"
-                                    className="block w-full bg-blue-600 hover:bg-blue-700 text-white font-medium py-3 px-6 rounded-lg text-center transition-colors"
+                                <Button
+                                    asChild
+                                    className="w-full"
                                 >
-                                    Go to Homepage
-                                </a>
-                                <p className="text-sm text-gray-500 text-center">
+                                    <a href="https://cloud4wi.ai">
+                                        Go to Homepage
+                                    </a>
+                                </Button>
+                                <p className="text-xs text-center text-muted-foreground">
                                     Can't find the email? Check your spam folder.
                                 </p>
                             </div>
@@ -273,24 +270,23 @@ export function Wizard() {
                         {isLoading && (
                             <div className="absolute inset-0 bg-white/80 backdrop-blur-sm z-50 flex flex-col items-center justify-center space-y-4 animate-in fade-in duration-300">
                                 <div className="h-12 w-12 border-4 border-primary border-t-transparent rounded-full animate-spin" />
-                                <p className="text-lg font-medium text-gray-600">Finalizing your account...</p>
+                                <p className="text-lg font-medium text-gray-600">Checking your information...</p>
                             </div>
                         )}
 
                         <div className="space-y-6">
                             <div className="space-y-2">
                                 <div className="text-sm text-muted-foreground mb-2">
-                                    <span>Step {step} of 4</span>
+                                    <span>Step {step} of 3</span>
                                 </div>
-                                <Progress value={(step / 4) * 100} className="h-2" />
+                                <Progress value={(step / 3) * 100} className="h-2" />
                             </div>
 
                             <FormProvider {...methods}>
                                 <form onSubmit={methods.handleSubmit(onSubmit)} className="space-y-6">
                                     {step === 1 && <Step1AccountInfo onNext={nextStep} />}
                                     {step === 2 && <Step2Verification onNext={nextStep} onBack={prevStep} />}
-                                    {step === 3 && <Step3Password onNext={nextStep} onBack={prevStep} />}
-                                    {step === 4 && <Step4BusinessInfo onBack={prevStep} />}
+                                    {step === 3 && <Step4BusinessInfo onBack={prevStep} />}
                                 </form>
                             </FormProvider>
                         </div>
