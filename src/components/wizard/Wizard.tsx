@@ -223,7 +223,7 @@ export function Wizard() {
                                 <div className="space-y-4">
                                     <h2 className="text-3xl font-bold">Let's get started with Guest WiFi.</h2>
                                     <p className="text-gray-300 text-lg">
-                                        Elevate your guest WiFi experience for free in a few minutes!.
+                                        Elevate your guest WiFi experience for free in a few minutes!
                                     </p>
                                 </div>
                             </div>
