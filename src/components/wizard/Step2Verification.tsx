@@ -94,7 +94,7 @@ export function Step2Verification({ onNext, onBack }: Step2Props) {
     return (
         <div className="space-y-6 animate-in fade-in slide-in-from-right-4 duration-500">
             <div className="space-y-2">
-                <Button variant="ghost" className="pl-0 hover:bg-transparent" onClick={onBack}>
+                <Button type="button" variant="ghost" className="pl-0 hover:bg-transparent" onClick={onBack}>
                     <ArrowLeft className="mr-2 h-4 w-4" />
                     Back
                 </Button>
@@ -104,7 +104,15 @@ export function Step2Verification({ onNext, onBack }: Step2Props) {
                 </p>
             </div>
 
-            <div className="space-y-4">
+            <div
+                className="space-y-4"
+                onKeyDown={(e) => {
+                    if (e.key === "Enter") {
+                        e.preventDefault()
+                        handleVerify()
+                    }
+                }}
+            >
                 <div className="flex justify-center py-4">
                     <InputOTP
                         maxLength={6}
